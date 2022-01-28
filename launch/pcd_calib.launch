@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<launch>	
+
+      <arg name="lidar_odom" value="loam" />
+      <arg name="target_cloud_topic" value="/ada/lidar32_center/pointcloud" />
+      <arg name="source_cloud_topic" value="/ada/lidar16_left/pointcloud" />
+      <arg name="sensor_frame" value="/ada_lidar32_center_link" />
+      <arg name="scanPeriod" value="0.1" />
+<!--       <arg name="target_cloud_topic" value="/carla/ego_vehicle/lidar" />
+      <arg name="source_cloud_topic" value="/carla/ego_vehicle/lidar2" />
+      <arg name="scanPeriod" value="0.2" />
+      <arg name="sensor_frame" value="ego_vehicle/lidar" /> -->
+
+
+      <!--- TF -->
+      <node pkg="tf" type="static_transform_publisher" name="camera_init_to_map"  args="0 0 0 1.570795   0        1.570795 /map    /camera_init 10" />
+      <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera" args="0 0 0 -1.570795 -1.570795 0        /camera /base_link   10" />
+      <node pkg="tf" type="static_transform_publisher" name="base_link_to_lidar" args="0 0 0 0 0 0        /base_link $(arg sensor_frame)   10" />
+
+
+      <!-- LEGO LOAM -->
+      <group if="$(eval arg('lidar_odom') =='lego')">
+	      <node pkg="lego_loam" type="imageProjection"    name="imageProjection"    output="screen">
+                  <remap from="/velodyne_points" to="$(arg target_cloud_topic)" />
+            </node>
+            <node pkg="lego_loam" type="featureAssociation" name="featureAssociation" output="screen"/>
+            <node pkg="lego_loam" type="mapOptmization"     name="mapOptmization"     output="screen"/>
+            <node pkg="lego_loam" type="transformFusion"    name="transformFusion"    output="screen"/>
+      </group>
+
+      <!-- LOAM -->
+
+      <group if="$(eval arg('lidar_odom') =='loam')">
+            <node pkg="loam_velodyne" type="multiScanRegistration" name="multiScanRegistration" output="screen">
+                <!-- <param name="lidar" value="HDL-32" /> -->
+                <param name="minVerticalAngle" value="-20" /> 
+                <param name="maxVerticalAngle" value="20" /> 
+                <param name="nScanRings" value="32" /> 
+                <param name="scanPeriod" value="$(arg scanPeriod)" />
+
+                <remap from="/multi_scan_points" to="$(arg target_cloud_topic)" />
+            </node>
+
+            <node pkg="loam_velodyne" type="laserOdometry" name="laserOdometry" output="screen" respawn="true">
+                <param name="scanPeriod" value="$(arg scanPeriod)" />
+            </node>
+
+            <node pkg="loam_velodyne" type="laserMapping" name="laserMapping" output="screen">
+                <param name="scanPeriod" value="$(arg scanPeriod)" />
+            </node>
+
+            <node pkg="loam_velodyne" type="transformMaintenance" name="transformMaintenance" output="screen">
+            </node>
+      </group>
+
+
+      <!-- PCL CALIB -->
+
+	<node pkg="pcd_calib" type="pcl_calib" name="pcl_calib" output="screen">
+            <param name="target_cloud_topic"  value= "$(arg target_cloud_topic)" />
+            <param name="source_cloud_topic"  value= "$(arg source_cloud_topic)" />
+            
+            <param name="map_frame" value= "map" />
+            <param name="sensor_frame" value= "$(arg sensor_frame)" />
+            <param name="odometry_sensor_frame" value= "$(arg sensor_frame)" />
+            
+      <!--       <param name=" initial_x" value= "-0.075707" />
+            <param name=" initial_y" value= "1.118574" />
+            <param name=" initial_z" value= "-0.597746" />
+            <param name=" initial_roll" value= "-0.000942" />
+            <param name=" initial_pitch" value= "0.785782" />
+            <param name=" initial_yaw" value= "0.725210" /> -->
+            
+<!--             <param name=" initial_x" value= "0.1" />
+            <param name=" initial_y" value= "1.1" />
+            <param name=" initial_z" value= "-0.7" />
+            <param name=" initial_roll" value= "0.0" />
+            <param name=" initial_pitch" value= "0.78" />
+            <param name=" initial_yaw" value= "0.78" /> -->
+
+
+            <param name=" initial_x" value= "0.1" />
+            <param name=" initial_y" value= "0.7" />
+            <param name=" initial_z" value= "-0.7" />
+            <param name=" initial_roll" value= "0.0" />
+            <param name=" initial_pitch" value= "0.78" />
+            <param name=" initial_yaw" value= "1.0" />
+            
+<!--             <param name=" initial_x" value= "-0.8" />
+            <param name=" initial_y" value= "0.2" />
+            <param name=" initial_z" value= "-0.35" />
+            <param name=" initial_roll" value= "0.0" />
+            <param name=" initial_pitch" value= "-0.75" />
+            <param name=" initial_yaw" value= "0.0" /> -->
+
+            <param name=" target_time_interval" value= "0.2" />
+            <param name=" source_time_interval" value= "0.2" />
+	</node>
+
+
+
+      <!-- RVIZ -->
+
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find testing)/launch/ada/calib.rviz" />
+
+
+
+<!-- 
+      <node pkg="tools" type="odometry_transform.py" name="odometry_transform" output="log">
+        <param name="send_tf" value="True"/>
+        <param name="heading_from_poses" value="False"/>
+        <param name="reset_odometry" value="False"/>
+        <param name="loam_active" value="False"/>
+        <param name="input_type" value="0"/>
+        <param name="input_topic" value="/carla/ego_vehicle/odometry"/>
+        <param name="output_topic" value="/carla/ego_vehicle/odometry_2"/>
+        <param name="tf_parent" value="map"/>
+        <param name="tf_child" value="carla_base_link"/>
+      </node> -->
+
+
+	<!-- <node pkg="rosbag" type="play" name="rosbag" args="/home/mimiguel/bagfiles/CARLA/carla_2_lidar_2.bag - -clock /carla/ego_vehicle/lidar:=/ada/lidar32_center/pointcloud /carla/ego_vehicle/lidar2:=/ada/lidar16_right/pointcloud"/> -->
+
+
+
+</launch>

@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>pcl_test</name>
+  <version>0.0.0</version>
+  <description>
+    pcl_test
+  </description>
+
+
+  <maintainer email="mimiguel@ing.uc3m.es">Miguel Angel de Miguel</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://uc3m.es/islab</url>
+
+  <author email="mimiguel@ing.uc3m.es">Miguel Angel de Miguel</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>libpcl-all-dev</build_depend>
+  <build_depend>cmake_modules</build_depend>
+  <build_depend>message_generation</build_depend>  
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>image_geometry</build_depend>
+  <build_depend>image_transport</build_depend>
+  <build_depend>image_view</build_depend>
+  <build_depend>opencv2</build_depend>
+  <build_depend>tf</build_depend>
+  <build_export_depend>cv_bridge</build_export_depend>
+  <build_export_depend>image_geometry</build_export_depend>
+  <build_export_depend>image_transport</build_export_depend>
+  <build_export_depend>image_view</build_export_depend>
+  <build_export_depend>opencv2</build_export_depend>
+  <build_export_depend>tf</build_export_depend>
+  <build_export_depend>message_runtime</build_export_depend>
+  <exec_depend>cv_bridge</exec_depend>
+  <exec_depend>image_geometry</exec_depend>
+  <exec_depend>image_transport</exec_depend>
+  <exec_depend>image_view</exec_depend>
+  <exec_depend>opencv2</exec_depend>
+  <exec_depend>tf</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+
+  <depend>roscpp</depend>
+
+</package>
