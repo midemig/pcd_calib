@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(pcl_test)
+project(pcd_calib)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -17,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
   image_geometry
   image_transport
   image_view
-  OpenCV
 )
 #find_package(Threads REQUIRED)
 catkin_package()
@@ -27,7 +26,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${TF_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
 )
 
 link_directories(${PCL_LIBRARY_DIRS})
