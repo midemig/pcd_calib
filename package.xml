@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>pcd_calib</name>
+  <version>0.0.0</version>
+  <description>
+    pcd_calib
+  </description>
+
+
+  <maintainer email="mimiguel@ing.uc3m.es">Miguel Angel de Miguel</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://www.ampl.es/</url>
+
+  <author email="mimiguel@ing.uc3m.es">Miguel Angel de Miguel</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>libpcl-all-dev</build_depend>
+  <build_depend>cmake_modules</build_depend>
+  <build_depend>message_generation</build_depend>  
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>pcl_conversions</build_depend>
+  <build_depend>tf</build_depend>
+  <build_export_depend>pcl_ros</build_export_depend>
+  <build_export_depend>pcl_conversions</build_export_depend>
+  <build_export_depend>tf</build_export_depend>
+  <build_export_depend>message_runtime</build_export_depend>
+  <exec_depend>pcl_ros</exec_depend>
+  <exec_depend>pcl_conversions</exec_depend>
+  <exec_depend>tf</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+
+  <depend>roscpp</depend>
+
+</package>

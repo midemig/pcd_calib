@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<launch>	
+
+
+      <param name="/use_sim_time" value="true"/>
+      
+      <arg name="run_rviz" default="true" />
+
+      <arg name="lidar_odom" value="loam" />
+
+      <arg name="target_cloud_topic" value="/carla/ego_vehicle/lidar" />
+      <arg name="source_cloud_topic" value="/carla/ego_vehicle/lidar2" />
+      <arg name="scanPeriod" value="0.05" />
+      <arg name="sensor_frame" value="ego_vehicle/lidar" />
+
+      <!-- Arg to params -->
+      <arg name="target_time_interval" default="0.6" />
+      <arg name="source_time_interval" default="0.6" />
+      <arg name="data_file_name" default="data_test.txt" />
+      <arg name="n_iters" default="60" />
+      <arg name="bag_start" default="0" />
+
+      <arg name="initial_x" default="0" />
+      <arg name="initial_y" default="0" />
+      <arg name="initial_z" default="0" />
+      <arg name="initial_roll" default="0" />
+      <arg name="initial_pitch" default="0" />
+      <arg name="initial_yaw" default="0" />
+      <arg name="use_ground_removal" default="0" />
+      
+      <arg name="icp_local_decay" default="0.95" />
+      <arg name="icp_full_decay" default="0.95" />
+      <arg name="icp_local_dist" default="0.5" />
+      <arg name="icp_full_dist" default="0.5" />
+
+
+
+
+      <node pkg="rosbag" type="play" name="rosbag" args="/home/mimiguel/bagfiles/CARLA/carla_2_lidar_4.bag --clock -r 0.5 -s $(arg bag_start) /tf:=/t /tf_static:=/t"/>
+
+
+
+      <!--- TF -->
+      <node pkg="tf" type="static_transform_publisher" name="camera_init_to_map"  args="0 0 0 1.570795   0        1.570795 /map    /camera_init 10" />
+      <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera" args="0 0 0 -1.570795 -1.570795 0        /camera /base_link   10" />
+      <node pkg="tf" type="static_transform_publisher" name="base_link_to_lidar" args="0 0 0 0 0 0        /base_link $(arg sensor_frame)   10" />
+
+
+      <!-- LEGO LOAM -->
+      <group if="$(eval arg('lidar_odom') =='lego')">
+	      <node pkg="lego_loam" type="imageProjection"    name="imageProjection"    output="screen">
+                  <remap from="/velodyne_points" to="$(arg target_cloud_topic)" />
+            </node>
+            <node pkg="lego_loam" type="featureAssociation" name="featureAssociation" output="screen"/>
+            <node pkg="lego_loam" type="mapOptmization"     name="mapOptmization"     output="screen"/>
+            <node pkg="lego_loam" type="transformFusion"    name="transformFusion"    output="screen"/>
+      </group>
+
+      <!-- LOAM -->
+
+      <group if="$(eval arg('lidar_odom') =='loam')">
+            <node pkg="loam_velodyne" type="multiScanRegistration" name="multiScanRegistration" output="screen">
+                <!-- <param name="lidar" value="HDL-32" /> -->
+                <param name="minVerticalAngle" value="-20" /> 
+                <param name="maxVerticalAngle" value="20" /> 
+                <param name="nScanRings" value="32" /> 
+                <param name="scanPeriod" value="$(arg scanPeriod)" />
+
+                <remap from="/multi_scan_points" to="$(arg target_cloud_topic)" />
+            </node>
+
+            <node pkg="loam_velodyne" type="laserOdometry" name="laserOdometry" output="screen">
+                <param name="scanPeriod" value="$(arg scanPeriod)" />
+            </node>
+
+            <node pkg="loam_velodyne" type="laserMapping" name="laserMapping" output="screen">
+                <param name="scanPeriod" value="$(arg scanPeriod)" />
+            </node>
+
+            <node pkg="loam_velodyne" type="transformMaintenance" name="transformMaintenance" output="screen">
+            </node>
+      </group>
+
+
+      <!-- PCL CALIB -->
+
+	<node pkg="pcd_calib" type="pcl_calib" name="pcl_calib" output="screen">
+            <param name="target_cloud_topic"  value= "$(arg target_cloud_topic)" />
+            <param name="source_cloud_topic"  value= "$(arg source_cloud_topic)" />
+            
+            <param name="map_frame" value= "map" />
+            <param name="sensor_frame" value= "$(arg sensor_frame)" />
+            <param name="odometry_sensor_frame" value= "$(arg sensor_frame)" />
+
+
+            <param name=" initial_x" value= "$(arg initial_x)" />
+            <param name=" initial_y" value= "$(arg initial_y)" />
+            <param name=" initial_z" value= "$(arg initial_z)" />
+            <param name=" initial_roll" value= "$(arg initial_roll)" />
+            <param name=" initial_pitch" value= "$(arg initial_pitch)" />
+            <param name=" initial_yaw" value= "$(arg initial_yaw)" />
+            
+
+            <param name="target_time_interval" value= "$(arg target_time_interval)" />
+            <param name="source_time_interval" value= "$(arg source_time_interval)" />
+            
+            <param name="data_file_name" value= "$(arg data_file_name)" />
+            <param name="n_iters" value= "$(arg n_iters)" />
+            <param name="use_ground_removal" value= "$(arg use_ground_removal)" />
+
+            <param name="icp_local_decay" value="$(arg icp_local_decay)" />
+            <param name="icp_full_decay" value="$(arg icp_full_decay)" />
+            <param name="icp_local_dist" value="$(arg icp_local_dist)" />
+            <param name="icp_full_dist" value="$(arg icp_full_dist)" />
+
+
+	</node>
+
+
+
+      <!-- RVIZ -->
+      <group if="$(eval arg('run_rviz') == true)">
+	     <node pkg="rviz" type="rviz" name="rviz" args="-d $(find pcd_calib)/cfg/calib.rviz" />
+      </group>
+
+
+
+
+</launch>
