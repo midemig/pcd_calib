@@ -33,7 +33,7 @@
 #include <iostream>
 #include <fstream>
 
-#define n_clouds 50
+#define n_clouds 15
 // int n_clouds = 50;
 
 
@@ -58,12 +58,20 @@ float distance(float x, float y, float z);
 float distance_last(float x, float y, float z);
 void remove_ground_plane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_out);
 
+// C
+// float tarjet_x = -5.0;
+// float tarjet_y = 0.0;
+// float tarjet_z = 0.0;
+// float tarjet_roll = 0.0;
+// float tarjet_pitch = 0.0;
+// float tarjet_yaw =  3.141592654;
 
+// A
 float tarjet_x = -1.0;
 float tarjet_y = 0.0;
 float tarjet_z = -0.4;
 float tarjet_roll = 0.0;
-float tarjet_pitch = -0.6981;
+float tarjet_pitch = -0.698131701;
 float tarjet_yaw =  0.0;
 
 
@@ -177,7 +185,7 @@ void get_params(ros::NodeHandle *nh)
   
   // nh->param<int>("n_clouds", n_clouds, 50);
 
-  myfile.open("/home/mimiguel/bagfiles/Calibracion/Results_metrics/" + data_file_name);
+  myfile.open("/data/bagfiles/Calibracion/Miguel_calib_paper/" + data_file_name);
 
 }
 
@@ -219,15 +227,18 @@ void tarjet_cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input_cloud)
 
   target_transform_array.push_back(transform);
 
-  if(target_transform_array.size() > n_clouds)
+  if(target_transform_array.size() > n_clouds+10)
   {
     target_transform_array.erase(target_transform_array.begin());
   }   
 
-  if(source_cloud_array.size()>=n_clouds)
+
+  std::cout << "N Clouds Target: " << tarjet_cloud_array.size() << std::endl;
+
+  if(tarjet_cloud_array.size()>=n_clouds+10)
   {
     tarjet_cloud_sub.shutdown();
-    source_cloud_sub.shutdown();
+    // source_cloud_sub.shutdown();
     iterate();
   }
 }
@@ -236,7 +247,7 @@ void source_cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input_cloud)
 {
   double cloud_time = (*input_cloud).header.stamp.sec + double((*input_cloud).header.stamp.nsec) / double(1000000000);
 
-  if(!first_source_cloud && (cloud_time - last_source_time) < source_time_interval)
+  if((!first_source_cloud && (cloud_time - last_source_time) < source_time_interval) | target_transform_array.size() < 5)
     return;
   
   first_source_cloud = false;
@@ -265,6 +276,8 @@ void source_cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input_cloud)
 
   source_cloud_array.push_back(*aux_cloud);
 
+  std::cout << "N Clouds Source: " << source_cloud_array.size() << std::endl;
+
   if(source_cloud_array.size() > n_clouds)
   {
     source_cloud_array.erase(source_cloud_array.begin());
@@ -276,6 +289,11 @@ void source_cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input_cloud)
   {
     transform_array.erase(transform_array.begin());
   }      
+
+  if(source_cloud_array.size()>=n_clouds)
+  {
+    source_cloud_sub.shutdown();
+  }
 
 }
 
@@ -556,6 +574,24 @@ std::vector<double> icp(float x, float y, float z, float qx, float qy, float qz,
 
   Eigen::Matrix<float, 4, 4> initial_guess = tf_matrix(x, y, z, transform);
 
+  // /// NEW *******************************
+
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud_transformed (new pcl::PointCloud<pcl::PointXYZ>);
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr source_cloud (new pcl::PointCloud<pcl::PointXYZ>);
+
+  // int i = 10;
+
+  // pcl_ros::transformPointCloud(*target_full_cloud, *target_cloud_transformed, transform_array_2[i].inverse());
+  // publish_cloud(target_cloud_transformed, 1);
+
+  // *source_cloud = source_cloud_array[i];
+
+  // pcl_ros::transformPointCloud(*source_cloud, *source_cloud, transform);
+  // publish_cloud(source_cloud, 3);
+
+
+  // /// ***********************************
+
   for(int i = 0; i<n_clouds ; i++)
   {
     thread_array.push_back(std::thread(&thread_icp, i, initial_guess, &results_array, CorrespondenceDistance));
@@ -612,6 +648,21 @@ static void thread_icp(int i, Eigen::Matrix<float, 4, 4> initial_guess, Eigen::M
   pcl_ros::transformPointCloud(*target_full_cloud, *target_cloud_transformed, transform_array_2[i].inverse());
 
   *source_cloud = source_cloud_array[i];
+
+  /// NEW ***************************************
+
+  float grid_size = 0.05;
+
+  pcl::VoxelGrid<pcl::PointXYZ> sor;
+  sor.setInputCloud (source_cloud);
+  sor.setLeafSize (grid_size, grid_size, grid_size);
+  sor.filter (*source_cloud);
+
+  // sor.setInputCloud (target_cloud_transformed);
+  // sor.setLeafSize (grid_size, grid_size, grid_size);
+  // sor.filter (*target_cloud_transformed);
+  
+  /// ***************************************
 
   // publish_cloud(source_cloud, 3);
   // publish_cloud(target_cloud_transformed, 1);
@@ -671,7 +722,7 @@ static void publish_cloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int pub_id)
   sensor_msgs::PointCloud2 send_cloud;
 
   pcl::toROSMsg(*cloud, send_cloud);
-  send_cloud.header.frame_id = "map";
+  send_cloud.header.frame_id = map_frame;
 
   switch(pub_id){
     case 1:
@@ -785,7 +836,7 @@ int main (int argc, char **argv)
   ros::init(argc, argv, "pcl_cluster");
   ros::NodeHandle nh("~");
   // PCDCalib c = PCDCalib(&nh);
-  ros::Duration(5.0).sleep();
+  ros::Duration(2.5).sleep();
   PCDCalib(&nh);
   ros::spin();
 }
