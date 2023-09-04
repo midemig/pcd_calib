@@ -1,4 +1,4 @@
-#include <ros/ros.h>
+// #include <ros/ros.h>
 #include <thread>
 
 // PCL specific includes
@@ -24,9 +24,9 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/filter.h>
 
-#include <tf/tf.h>
-#include <tf/transform_listener.h>
-#include <tf/transform_broadcaster.h>
+// #include <tf/tf.h>
+// #include <tf/transform_listener.h>
+// #include <tf/transform_broadcaster.h>
 
 #include <vector>
 #include <cfloat>
@@ -37,8 +37,8 @@
 // int n_clouds = 50;
 
 
-void PCDCalib(ros::NodeHandle *nh);
-void get_params(ros::NodeHandle *nh);
+void PCDCalib();
+void get_params();
 void tarjet_cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input_cloud);
 void source_cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input_cloud);
 void quat2euler(float qx, float qy, float qz, float qw, double *roll, double *pitch, double *yaw);
@@ -120,27 +120,16 @@ std::ofstream myfile;
 
 
 
-void PCDCalib(ros::NodeHandle *nh) {
-
-  ROS_INFO("START!");
+void PCDCalib() {
 
 
-  listener = new tf::TransformListener();
-  br = new tf::TransformBroadcaster();
-
-  get_params(nh);
+  get_params();
 
   // Create a ROS subscriber for the input point cloud
-  tarjet_cloud_sub = nh->subscribe (target_cloud_topic, 1, &tarjet_cloud_cb);
-  source_cloud_sub = nh->subscribe (source_cloud_topic, 1, &source_cloud_cb);
+  get_data();
 
-  // Create a ROS publisher for the output model coefficients
-  pub = nh->advertise<sensor_msgs::PointCloud2> ("output", 1);
-  pub2 = nh->advertise<sensor_msgs::PointCloud2> ("output2", 1);
-  pub3 = nh->advertise<sensor_msgs::PointCloud2> ("output3", 1);
-  pub4 = nh->advertise<sensor_msgs::PointCloud2> ("output4", 1);
+  iterate();
 
-  first_source_cloud = first_target_cloud = true;
 
   range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::LT, -min_x)));
   range_cond->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::GT, min_x)));
@@ -183,10 +172,6 @@ void get_params(ros::NodeHandle *nh)
   nh->param<int>("n_iters", n_iters, 10);
   nh->param<bool>("use_ground_removal", use_ground_removal, false);
   
-  // nh->param<int>("n_clouds", n_clouds, 50);
-
-  myfile.open("/data/bagfiles/Calibracion/Miguel_calib_paper/" + data_file_name);
-
 }
 
 void tarjet_cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input_cloud)
@@ -833,11 +818,6 @@ static std::vector<double> mRot2Quat(const Eigen::Matrix4d& matrix) {
 
 int main (int argc, char **argv)
 {
-  ros::init(argc, argv, "pcl_cluster");
-  ros::NodeHandle nh("~");
-  // PCDCalib c = PCDCalib(&nh);
-  ros::Duration(2.5).sleep();
-  PCDCalib(&nh);
-  ros::spin();
+  PCDCalib();
 }
  

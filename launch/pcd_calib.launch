@@ -6,45 +6,64 @@
       
       <arg name="run_rviz" default="true" />
 
-      <arg name="lidar_odom" value="loam" />
+      <arg name="lidar_odom" value="none" />
 
-      <arg name="target_cloud_topic" value="/carla/ego_vehicle/lidar" />
-      <arg name="source_cloud_topic" value="/carla/ego_vehicle/lidar2" />
-      <arg name="scanPeriod" value="0.05" />
-      <arg name="sensor_frame" value="ego_vehicle/lidar" />
+      <arg name="target_cloud_topic" value="/lidar_frt/pandar_points" />
+      <arg name="source_cloud_topic" value="/lidar_flt/pandar_points" />
+      <!-- <arg name="source_cloud_topic" value="/ada/lidar16_right/pointcloud" /> -->
+      <arg name="sensor_frame" value="/lidar_frt" />
+      <arg name="scanPeriod" value="0.1" />
 
       <!-- Arg to params -->
-      <arg name="target_time_interval" default="0.6" />
-      <arg name="source_time_interval" default="0.6" />
-      <arg name="data_file_name" default="data_test.txt" />
+      <arg name="target_time_interval" default="1.0" />
+      <arg name="source_time_interval" default="1.0" />
+      <arg name="data_file_name" default="frt_flt.txt" />
       <arg name="n_iters" default="60" />
-      <arg name="bag_start" default="0" />
+      <arg name="bag_start" default="1" />
 
-      <arg name="initial_x" default="0" />
-      <arg name="initial_y" default="0" />
-      <arg name="initial_z" default="0" />
-      <arg name="initial_roll" default="0" />
-      <arg name="initial_pitch" default="0" />
-      <arg name="initial_yaw" default="0" />
+      <arg name="initial_x" default="1.051" />
+      <arg name="initial_y" default="3.239" />
+      <arg name="initial_z" default="-2.491" />
+      <arg name="initial_roll" default="0.745" />
+      <arg name="initial_pitch" default="0.697" />
+      <arg name="initial_yaw" default="1.598" />
       <arg name="use_ground_removal" default="0" />
+
+<!--       <arg name="initial_x" default="-4.060" />
+      <arg name="initial_y" default="0.734" />
+      <arg name="initial_z" default="-0.883" />
+      <arg name="initial_roll" default="0.716" />
+      <arg name="initial_pitch" default="-0.728" />
+      <arg name="initial_yaw" default="-1.599" />
+      <arg name="use_ground_removal" default="0" /> -->
       
       <arg name="icp_local_decay" default="0.95" />
       <arg name="icp_full_decay" default="0.95" />
       <arg name="icp_local_dist" default="0.5" />
       <arg name="icp_full_dist" default="0.5" />
 
+<!-- - Translation: [1.051, 3.239, -2.491]
+- Rotation: in Quaternion [0.011, 0.467, 0.541, 0.700]
+            in RPY (radian) [0.745, 0.697, 1.598]
+
+
+- Translation: [-4.060, 0.734, -0.883]
+- Rotation: in Quaternion [-0.011, -0.467, -0.541, 0.700]
+            in RPY (radian) [0.716, -0.728, -1.599] -->
 
 
 
-      <node pkg="rosbag" type="play" name="rosbag" args="/home/mimiguel/bagfiles/CARLA/carla_2_lidar_4.bag --clock -r 0.5 -s $(arg bag_start) /tf:=/t /tf_static:=/t"/>
+      <!-- <node pkg="rosbag" type="play" name="rosbag" args="/home/mimiguel/bagfiles/Avila/prueba5_2022-05-17-12-43-54_0.bag - -clock -r 0.3 -s $(arg bag_start) /tf:=/t /tf_static:=/t"/> -->
 
 
 
       <!--- TF -->
-      <node pkg="tf" type="static_transform_publisher" name="camera_init_to_map"  args="0 0 0 1.570795   0        1.570795 /map    /camera_init 10" />
+<!--       <node pkg="tf" type="static_transform_publisher" name="camera_init_to_map"  args="0 0 0 1.570795   0        1.570795 /map    /camera_init 10" />
       <node pkg="tf" type="static_transform_publisher" name="base_link_to_camera" args="0 0 0 -1.570795 -1.570795 0        /camera /base_link   10" />
       <node pkg="tf" type="static_transform_publisher" name="base_link_to_lidar" args="0 0 0 0 0 0        /base_link $(arg sensor_frame)   10" />
+ -->
 
+      <node pkg="tf" type="static_transform_publisher" name="tf_pub_base_link_lidar_bt" args= "0.0 0.0 0.0 0.0 0.0 0.6981 world map 100"/>
 
       <!-- LEGO LOAM -->
       <group if="$(eval arg('lidar_odom') =='lego')">
